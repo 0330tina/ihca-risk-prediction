@@ -36,6 +36,36 @@ body {
   .field-grid {
     grid-template-columns: 1fr !important;
   }
+  
+  /* 移動端優化 */
+  body {
+    font-size: 14px;
+  }
+  
+  input[type="number"],
+  input[type="text"] {
+    font-size: 16px !important; /* 防止 iOS 自動縮放 */
+  }
+}
+
+/* 移動端觸控優化 */
+@media (max-width: 768px) {
+  button {
+    min-height: 44px; /* iOS 建議的最小觸控區域 */
+    padding: 12px 20px !important;
+  }
+  
+  input[type="radio"] {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px;
+    min-height: 20px;
+  }
+  
+  .radio-label {
+    min-height: 44px;
+    align-items: center;
+  }
 }
 
 /* 輸入框 focus 效果 */
