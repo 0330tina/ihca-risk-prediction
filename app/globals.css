@@ -21,32 +21,33 @@ body {
   line-height: 1.6;
 }
 
-/* 響應式設計 */
-@media (max-width: 1200px) {
-  .form-content-grid {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+/* 響應式設計 - 臨床輸入系統 */
+/* 桌機：多欄並排 */
+@media (min-width: 768px) {
+  .field-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 24px !important;
   }
 }
 
-/* 中等螢幕優化（避免重疊） */
-@media (max-width: 900px) {
-  .form-content-grid {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
-  }
-  
+/* 大螢幕：三欄 */
+@media (min-width: 1024px) {
   .field-grid {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 }
 
-/* 小螢幕優化 */
-@media (max-width: 640px) {
-  .form-content-grid {
-    grid-template-columns: 1fr !important;
-  }
-  
+/* 手機：單欄 */
+@media (max-width: 767px) {
   .field-grid {
     grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  
+  /* Radio 選項在手機上單欄 */
+  .radio-label {
+    flex: 1 1 100% !important;
+    min-width: 100% !important;
   }
 }
 
@@ -71,8 +72,8 @@ body {
   
   input[type="number"],
   input[type="text"] {
-    font-size: 12px !important;
-    height: 36px !important;
+    font-size: 16px !important; /* 防止 iOS 自動縮放 */
+    min-height: 44px !important; /* 手機友善觸控目標 */
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: textfield;
@@ -114,10 +115,10 @@ body {
   
   input[type="number"],
   input[type="text"] {
-    height: 36px !important;
-    padding: 10px 12px !important;
-    font-size: 12px !important;
-    -webkit-tap-highlight-color: rgba(255, 182, 193, 0.2);
+    min-height: 44px !important; /* 手機友善觸控目標 */
+    padding: 12px 16px !important;
+    font-size: 16px !important; /* 防止 iOS 自動縮放 */
+    -webkit-tap-highlight-color: rgba(74, 144, 226, 0.2);
     box-sizing: border-box !important;
   }
   
@@ -185,6 +186,12 @@ button:not(:disabled):hover {
   box-shadow: 0 2px 6px rgba(74, 144, 226, 0.25) !important;
 }
 
+/* 清除按鈕 hover 效果 */
+header button:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  opacity: 1 !important;
+}
+
 button:not(:disabled):active {
   transform: translateY(0);
 }
@@ -243,9 +250,14 @@ button[style*="backgroundColor"]:hover {
   
   input[type="number"],
   input[type="text"] {
-    font-size: 12px !important;
+    font-size: 14px !important;
     padding: 10px 12px !important;
-    height: 36px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    width: 240px !important;
+    min-width: 240px !important;
+    max-width: 240px !important;
     box-sizing: border-box !important;
   }
   
@@ -334,9 +346,14 @@ button[style*="backgroundColor"]:hover {
   
   input[type="number"],
   input[type="text"] {
-    font-size: 12px !important;
-    padding: 9px 11px !important;
-    height: 36px !important;
+    font-size: 14px !important;
+    padding: 10px 12px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    width: 240px !important;
+    min-width: 240px !important;
+    max-width: 240px !important;
     box-sizing: border-box !important;
   }
   

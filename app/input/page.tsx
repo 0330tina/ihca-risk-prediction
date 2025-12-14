@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { savePatient, createPatientFromResult } from '@/lib/patientStorage'
 
@@ -24,7 +24,7 @@ const fieldConfigs: FieldConfig[] = [
     key: 'Age',
     label: '年齡',
     unit: '歲',
-    placeholder: '請輸入年齡',
+    placeholder: '例如：65',
     type: 'number',
     min: 0,
     max: 120,
@@ -76,7 +76,7 @@ const fieldConfigs: FieldConfig[] = [
     key: 'Temp__01_1',
     label: '體溫',
     unit: '°C',
-    placeholder: '請輸入體溫',
+    placeholder: '例如：36.5',
     type: 'number',
     min: 30,
     max: 43,
@@ -84,9 +84,9 @@ const fieldConfigs: FieldConfig[] = [
   },
   {
     key: 'Sp_01_1',
-    label: '收縮壓 (SBP)',
+    label: '收縮壓',
     unit: 'mmHg',
-    placeholder: '請輸入收縮壓',
+    placeholder: '例如：120',
     type: 'number',
     min: 50,
     max: 250,
@@ -94,9 +94,9 @@ const fieldConfigs: FieldConfig[] = [
   },
   {
     key: 'Dp_01_1',
-    label: '舒張壓 (DBP)',
+    label: '舒張壓',
     unit: 'mmHg',
-    placeholder: '請輸入舒張壓',
+    placeholder: '例如：80',
     type: 'number',
     min: 30,
     max: 150,
@@ -104,9 +104,9 @@ const fieldConfigs: FieldConfig[] = [
   },
   {
     key: 'Spo2_01_1',
-    label: '血氧 (SpO2)',
+    label: '血氧',
     unit: '%',
-    placeholder: '請輸入血氧',
+    placeholder: '例如：98',
     type: 'number',
     min: 50,
     max: 100,
@@ -117,7 +117,7 @@ const fieldConfigs: FieldConfig[] = [
     key: 'Albumin',
     label: '白蛋白',
     unit: 'g/dL',
-    placeholder: '請輸入白蛋白',
+    placeholder: '例如：4.0',
     type: 'number',
     min: 1.0,
     max: 6.0,
@@ -127,7 +127,7 @@ const fieldConfigs: FieldConfig[] = [
     key: 'GlucoseAC',
     label: '空腹血糖',
     unit: 'mg/dL',
-    placeholder: '請輸入空腹血糖',
+    placeholder: '例如：100',
     type: 'number',
     min: 20,
     max: 600,
@@ -137,7 +137,7 @@ const fieldConfigs: FieldConfig[] = [
     key: 'Hemoglobin',
     label: '血紅素',
     unit: 'g/dL',
-    placeholder: '請輸入血紅素',
+    placeholder: '例如：14.0',
     type: 'number',
     min: 3,
     max: 20,
@@ -147,7 +147,7 @@ const fieldConfigs: FieldConfig[] = [
     key: 'WBC',
     label: '白血球',
     unit: '10³/µL',
-    placeholder: '例如：12 代表 12×10³/µL',
+    placeholder: '例如：7.5',
     type: 'number',
     min: 0,
     max: 100,
@@ -158,7 +158,7 @@ const fieldConfigs: FieldConfig[] = [
     key: 'e_GFR',
     label: 'eGFR',
     unit: 'mL/min/1.73m²',
-    placeholder: '請輸入 eGFR',
+    placeholder: '例如：60',
     type: 'number',
     min: 0,
     max: 200,
@@ -168,7 +168,7 @@ const fieldConfigs: FieldConfig[] = [
     key: 'Potassium',
     label: '血鉀',
     unit: 'mEq/L',
-    placeholder: '請輸入血鉀',
+    placeholder: '例如：4.0',
     type: 'number',
     min: 1.5,
     max: 8.5,
@@ -184,12 +184,93 @@ interface FieldErrors {
   [key: string]: string
 }
 
+// 表單草稿管理 Hook
+const DRAFT_STORAGE_KEY = 'ihca_input_draft'
+
+function useFormDraft() {
+  const [isLoaded, setIsLoaded] = useState(false)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // 讀取草稿
+  const loadDraft = useCallback((): FormData => {
+    if (typeof window === 'undefined') return {}
+    try {
+      const draft = sessionStorage.getItem(DRAFT_STORAGE_KEY)
+      if (draft) {
+        return JSON.parse(draft)
+      }
+    } catch (error) {
+      console.error('Failed to load draft:', error)
+    }
+    return {}
+  }, [])
+
+  // 儲存草稿（節流）
+  const saveDraft = useCallback((data: FormData) => {
+    if (typeof window === 'undefined') return
+    
+    // 清除之前的 timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // 設置新的 timeout（節流 400ms）
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(data))
+      } catch (error) {
+        console.error('Failed to save draft:', error)
+      }
+    }, 400)
+  }, [])
+
+  // 清除草稿
+  const clearDraft = useCallback(() => {
+    if (typeof window === 'undefined') return
+    try {
+      sessionStorage.removeItem(DRAFT_STORAGE_KEY)
+    } catch (error) {
+      console.error('Failed to clear draft:', error)
+    }
+  }, [])
+
+  // 清理 timeout
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  return { loadDraft, saveDraft, clearDraft, isLoaded, setIsLoaded }
+}
+
 export default function InputPage() {
   const router = useRouter()
+  const { loadDraft, saveDraft, clearDraft, isLoaded, setIsLoaded } = useFormDraft()
   const [formData, setFormData] = useState<FormData>({})
   const [errors, setErrors] = useState<FieldErrors>({})
   const [isLoading, setIsLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string>('')
+
+  // 初始化：載入草稿
+  useEffect(() => {
+    if (!isLoaded) {
+      const draft = loadDraft()
+      if (Object.keys(draft).length > 0) {
+        setFormData(draft)
+      }
+      setIsLoaded(true)
+    }
+  }, [isLoaded, loadDraft])
+
+  // 自動儲存草稿
+  useEffect(() => {
+    if (isLoaded && Object.keys(formData).length > 0) {
+      saveDraft(formData)
+    }
+  }, [formData, isLoaded, saveDraft])
 
   // 驗證單一欄位
   const validateField = (key: string, value: string | number): string => {
@@ -325,6 +406,8 @@ export default function InputPage() {
         // 同時保存到 localStorage（持久化，用於看板）
         const patient = createPatientFromResult(result)
         savePatient(patient)
+        
+        // 提交成功後保留輸入資料（不清除草稿，方便返回修改）
       }
 
       // 導向結果頁
@@ -336,199 +419,186 @@ export default function InputPage() {
     }
   }
 
-  return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>非預期心臟驟停風險預測</h1>
-          <p style={styles.subtitle}>入院首日邏輯式回歸計算</p>
-        </div>
+  // 渲染欄位
+  const renderField = (config: FieldConfig) => {
+    const hasError = !!errors[config.key]
+    const fieldId = `field-${config.key}`
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formContent} className="form-content-grid">
-            {/* 基本資料 */}
-            <section style={styles.section}>
-              <div style={styles.sectionHeader}>
-                <span style={styles.stepIndicator}>1/4</span>
-                <h2 style={styles.sectionTitle}>基本資料</h2>
-              </div>
-              <div style={styles.fieldGrid} className="field-grid">
-                {fieldConfigs.slice(0, 2).map((config) => (
-                  <div key={config.key} style={styles.field}>
-                    <label style={styles.label}>
-                      {config.label}
-                      {config.required && <span style={styles.required}> *</span>}
-                      {config.unit && <span style={styles.unit}> {config.unit}</span>}
-                    </label>
-                    {config.type === 'number' && (
-                      <input
-                        type="number"
-                        step={config.key === 'Age' ? '1' : '0.1'}
-                        min={config.min}
-                        max={config.max}
-                        placeholder={config.placeholder}
-                        value={formData[config.key] || ''}
-                        onChange={(e) => handleChange(config.key, e.target.value)}
-                        style={{
-                          ...styles.input,
-                          ...(errors[config.key] ? styles.inputError : {}),
-                        }}
-                      />
-                    )}
-                    {config.type === 'radio' && (
-                      <div style={styles.radioGroup}>
-                        {config.options?.map((option) => (
-                          <label key={option.value} style={styles.radioLabel} className="radio-label">
-                            <input
-                              type="radio"
-                              name={config.key}
-                              value={option.value}
-                              checked={formData[config.key] === option.value}
-                              onChange={(e) => handleChange(config.key, parseInt(e.target.value, 10))}
-                              style={styles.radio}
-                            />
-                            {option.label}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                    {errors[config.key] && (
-                      <div style={styles.errorText}>{errors[config.key]}</div>
-                    )}
-                    {config.helperText && !errors[config.key] && (
-                      <div style={styles.helperText}>{config.helperText}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* 病史 */}
-            <section style={styles.section}>
-              <div style={styles.sectionHeader}>
-                <span style={styles.stepIndicator}>2/4</span>
-                <h2 style={styles.sectionTitle}>病史</h2>
-              </div>
-              <div style={styles.fieldGrid} className="field-grid">
-                {fieldConfigs.slice(2, 5).map((config) => (
-                  <div key={config.key} style={styles.field}>
-                    <label style={styles.label}>
-                      {config.label}
-                      {config.required && <span style={styles.required}> *</span>}
-                    </label>
-                    <div style={styles.radioGroup}>
-                      {config.options?.map((option) => (
-                        <label key={option.value} style={styles.radioLabel} className="radio-label">
-                          <input
-                            type="radio"
-                            name={config.key}
-                            value={option.value}
-                            checked={formData[config.key] === option.value}
-                            onChange={(e) => handleChange(config.key, parseInt(e.target.value, 10))}
-                            style={styles.radio}
-                          />
-                          {option.label}
-                        </label>
-                      ))}
-                    </div>
-                    {errors[config.key] && (
-                      <div style={styles.errorText}>{errors[config.key]}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* 生命徵象 */}
-            <section style={styles.section}>
-              <div style={styles.sectionHeader}>
-                <span style={styles.stepIndicator}>3/4</span>
-                <h2 style={styles.sectionTitle}>生命徵象</h2>
-              </div>
-              <div style={styles.fieldGrid} className="field-grid">
-                {fieldConfigs.slice(5, 9).map((config) => (
-                  <div key={config.key} style={styles.field}>
-                    <label style={styles.label}>
-                      {config.label}
-                      {config.required && <span style={styles.required}> *</span>}
-                      {config.unit && <span style={styles.unit}> {config.unit}</span>}
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min={config.min}
-                      max={config.max}
-                      placeholder={config.placeholder}
-                      value={formData[config.key] || ''}
-                      onChange={(e) => handleChange(config.key, e.target.value)}
-                      style={{
-                        ...styles.input,
-                        ...(errors[config.key] ? styles.inputError : {}),
-                      }}
-                    />
-                    {errors[config.key] && (
-                      <div style={styles.errorText}>{errors[config.key]}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* 檢驗 */}
-            <section style={styles.section}>
-              <div style={styles.sectionHeader}>
-                <span style={styles.stepIndicator}>4/4</span>
-                <h2 style={styles.sectionTitle}>檢驗</h2>
-              </div>
-              <div style={styles.fieldGrid} className="field-grid">
-                {fieldConfigs.slice(9).map((config) => (
-                  <div key={config.key} style={styles.field}>
-                    <label style={styles.label}>
-                      {config.label}
-                      {config.required && <span style={styles.required}> *</span>}
-                      {config.unit && <span style={styles.unit}> {config.unit}</span>}
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min={config.min}
-                      max={config.max}
-                      placeholder={config.placeholder}
-                      value={formData[config.key] || ''}
-                      onChange={(e) => handleChange(config.key, e.target.value)}
-                      style={{
-                        ...styles.input,
-                        ...(errors[config.key] ? styles.inputError : {}),
-                      }}
-                    />
-                    {errors[config.key] && (
-                      <div style={styles.errorText}>{errors[config.key]}</div>
-                    )}
-                    {config.helperText && !errors[config.key] && (
-                      <div style={styles.helperText}>{config.helperText}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
+    if (config.type === 'number') {
+      return (
+        <div key={config.key} style={styles.field}>
+          <label htmlFor={fieldId} style={styles.label}>
+            {config.label}
+            {config.required && <span style={styles.required} aria-label="必填"> *</span>}
+            {config.unit && <span style={styles.unit}> ({config.unit})</span>}
+          </label>
+          <div style={styles.inputWrapper}>
+            <input
+              id={fieldId}
+              type="number"
+              inputMode="decimal"
+              step={config.key === 'Age' ? '1' : '0.1'}
+              min={config.min}
+              max={config.max}
+              placeholder={config.placeholder}
+              value={formData[config.key] || ''}
+              onChange={(e) => handleChange(config.key, e.target.value)}
+              aria-invalid={hasError}
+              aria-describedby={hasError ? `${fieldId}-error` : config.helperText ? `${fieldId}-helper` : undefined}
+              style={{
+                ...styles.input,
+                ...(hasError ? styles.inputError : {}),
+              }}
+            />
+            {config.unit && <span style={styles.inputSuffix}>{config.unit}</span>}
           </div>
-
-          {/* 錯誤訊息 */}
-          {submitError && (
-            <div style={styles.submitError}>
-              <pre style={styles.errorPre}>{submitError}</pre>
+          {hasError && (
+            <div id={`${fieldId}-error`} role="alert" style={styles.errorText}>
+              {errors[config.key]}
             </div>
           )}
+          {config.helperText && !hasError && (
+            <div id={`${fieldId}-helper`} style={styles.helperText}>
+              {config.helperText}
+            </div>
+          )}
+        </div>
+      )
+    }
 
-          {/* 免責聲明 */}
-          <div style={styles.disclaimer}>
-            <p style={styles.disclaimerText}>
-              <strong>免責聲明：</strong>
-              此為研究/臨床輔助工具，非醫囑。計算結果僅供參考，不應作為臨床決策的唯一依據。
-            </p>
+    if (config.type === 'radio') {
+      return (
+        <div key={config.key} style={styles.field}>
+          <label style={styles.label}>
+            {config.label}
+            {config.required && <span style={styles.required} aria-label="必填"> *</span>}
+          </label>
+          <div style={styles.radioGroup} role="radiogroup" aria-labelledby={`${fieldId}-label`}>
+            {config.options?.map((option) => (
+              <label
+                key={option.value}
+                style={{
+                  ...styles.radioLabel,
+                  ...(formData[config.key] === option.value ? styles.radioLabelSelected : {}),
+                }}
+                className="radio-label"
+              >
+                <input
+                  type="radio"
+                  name={config.key}
+                  value={option.value}
+                  checked={formData[config.key] === option.value}
+                  onChange={(e) => handleChange(config.key, parseInt(e.target.value, 10))}
+                  style={styles.radio}
+                  aria-invalid={hasError}
+                />
+                {option.label}
+              </label>
+            ))}
           </div>
+          {hasError && (
+            <div role="alert" style={styles.errorText}>
+              {errors[config.key]}
+            </div>
+          )}
+        </div>
+      )
+    }
 
-          {/* 提交按鈕 */}
+    return null
+  }
+
+  // 分組欄位
+  const basicFields = fieldConfigs.slice(0, 2)
+  const historyFields = fieldConfigs.slice(2, 5)
+  const vitalFields = fieldConfigs.slice(5, 9)
+  const labFields = fieldConfigs.slice(9)
+
+  return (
+    <div style={styles.container}>
+      {/* Header */}
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <div>
+            <h1 style={styles.title}>非預期心臟驟停風險預測</h1>
+            <p style={styles.subtitle}>入院首日邏輯式回歸計算</p>
+          </div>
+          {isLoaded && Object.keys(formData).length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('確定要清除所有輸入資料嗎？')) {
+                  setFormData({})
+                  clearDraft()
+                  setErrors({})
+                }
+              }}
+              style={styles.clearButton}
+              aria-label="清除草稿"
+            >
+              清除
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Main Form */}
+      <form onSubmit={handleSubmit} style={styles.form}>
+        <div style={styles.formContent}>
+          {/* 基本資料 */}
+          <section style={styles.section}>
+            <div style={styles.sectionDivider} />
+            <h2 style={styles.sectionTitle}>基本資料</h2>
+            <div style={styles.fieldGrid} className="field-grid">
+              {basicFields.map(renderField)}
+            </div>
+          </section>
+
+          {/* 病史 */}
+          <section style={styles.section}>
+            <div style={styles.sectionDivider} />
+            <h2 style={styles.sectionTitle}>病史</h2>
+            <div style={styles.fieldGrid} className="field-grid">
+              {historyFields.map(renderField)}
+            </div>
+          </section>
+
+          {/* 生命徵象 */}
+          <section style={styles.section}>
+            <div style={styles.sectionDivider} />
+            <h2 style={styles.sectionTitle}>生命徵象</h2>
+            <div style={styles.fieldGrid} className="field-grid">
+              {vitalFields.map(renderField)}
+            </div>
+          </section>
+
+          {/* 檢驗 */}
+          <section style={styles.section}>
+            <div style={styles.sectionDivider} />
+            <h2 style={styles.sectionTitle}>檢驗</h2>
+            <div style={styles.fieldGrid} className="field-grid">
+              {labFields.map(renderField)}
+            </div>
+          </section>
+        </div>
+
+        {/* 錯誤訊息 */}
+        {submitError && (
+          <div style={styles.submitError} role="alert">
+            <pre style={styles.errorPre}>{submitError}</pre>
+          </div>
+        )}
+
+        {/* 免責聲明 */}
+        <div style={styles.disclaimer}>
+          <p style={styles.disclaimerText}>
+            <strong>免責聲明：</strong>
+            此為研究/臨床輔助工具，非醫囑。計算結果僅供參考，不應作為臨床決策的唯一依據。
+          </p>
+        </div>
+
+        {/* 提交按鈕 - 固定在底部 */}
+        <div style={styles.submitContainer}>
           <button
             type="submit"
             disabled={isLoading}
@@ -539,239 +609,216 @@ export default function InputPage() {
           >
             {isLoading ? '計算中...' : '計算風險'}
           </button>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   )
 }
 
-// 臨床決策支援系統（CDSS）配色 - 中性、冷靜、醫療風格
+// 臨床系統配色 - 中性、簡潔
 const colors = {
-  background: '#f8f9fa', // 極淺灰背景
-  card: '#ffffff',
-  cardBorder: '#e0e0e0', // 中性灰邊框
-  headerBg: '#2c3e50', // 深藍灰標題背景（醫療系統常用）
+  background: '#ffffff',
+  headerBg: '#2c3e50',
   headerText: '#ffffff',
-  sectionBorder: '#d0d0d0', // 細線區隔
+  divider: '#e0e0e0',
   input: '#ffffff',
-  inputBorder: '#b0b0b0', // 中性輸入框邊框
-  inputFocus: '#4a90e2', // 深藍 focus（醫療系統常用）
-  button: '#4a90e2', // 深藍按鈕（專業、可信）
+  inputBorder: '#b0b0b0',
+  inputFocus: '#4a90e2',
+  button: '#4a90e2',
   buttonHover: '#357abd',
   buttonDisabled: '#b0b0b0',
-  error: '#d32f2f', // 標準錯誤紅（僅用於錯誤提示）
-  errorBg: '#ffebee', // 極淺紅背景（錯誤提示）
-  textPrimary: '#212121', // 深灰主文字
-  textSecondary: '#616161', // 中灰次文字
-  textTertiary: '#9e9e9e', // 淺灰輔助文字
-  disclaimer: '#fff3cd', // 極淺黃（低對比提醒）
-  disclaimerBorder: '#ffc107', // 中性黃邊框
-  stepIndicator: '#757575', // 步驟指示器顏色
+  error: '#d32f2f',
+  errorBg: '#ffebee',
+  textPrimary: '#212121',
+  textSecondary: '#616161',
+  textTertiary: '#9e9e9e',
+  disclaimer: '#f5f5f5',
+  disclaimerText: '#616161',
 }
 
 // 樣式定義
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    padding: '16px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
     backgroundColor: colors.background,
-    WebkitOverflowScrolling: 'touch',
-    paddingTop: 'env(safe-area-inset-top)',
-    paddingBottom: 'env(safe-area-inset-bottom)',
-  },
-  card: {
-    width: '100%',
-    maxWidth: '1400px',
-    backgroundColor: colors.card,
-    borderRadius: '4px',
-    padding: '24px',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-    border: `1px solid ${colors.cardBorder}`,
-    maxHeight: 'calc(100vh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
+    paddingBottom: '100px', // 為 sticky submit button 留空間
     WebkitOverflowScrolling: 'touch',
   },
   header: {
     backgroundColor: colors.headerBg,
-    borderRadius: '2px',
-    padding: '16px 20px',
-    marginBottom: '24px',
-    textAlign: 'left',
+    color: colors.headerText,
+    padding: '20px 16px',
+  },
+  headerContent: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '16px',
+  },
+  clearButton: {
+    padding: '6px 12px',
+    fontSize: '13px',
+    fontWeight: '500',
+    color: colors.headerText,
+    backgroundColor: 'transparent',
+    border: `1px solid rgba(255, 255, 255, 0.3)`,
+    borderRadius: '4px',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+    whiteSpace: 'nowrap',
+    opacity: 0.9,
   },
   title: {
     fontSize: '20px',
     fontWeight: '600',
-    color: colors.headerText,
+    margin: 0,
     marginBottom: '4px',
     lineHeight: '1.3',
-    letterSpacing: '0.3px',
   },
   subtitle: {
     fontSize: '13px',
-    color: colors.headerText,
-    opacity: 0.9,
     margin: 0,
+    opacity: 0.9,
     lineHeight: '1.4',
     fontWeight: '400',
   },
   form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    flex: 1,
-    overflow: 'hidden',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '24px 16px',
   },
   formContent: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '8px',
-    overflowY: 'auto',
-    paddingRight: '4px',
-    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '32px',
   },
   section: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
-    padding: '16px',
-    borderRadius: '2px',
-    border: `1px solid ${colors.sectionBorder}`,
-    backgroundColor: colors.card,
-    minHeight: 'fit-content',
-    marginBottom: '16px',
+    gap: '16px',
   },
-  sectionHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
+  sectionDivider: {
+    height: '1px',
+    backgroundColor: colors.divider,
     marginBottom: '8px',
-    paddingBottom: '12px',
-    borderBottom: `1px solid ${colors.sectionBorder}`,
-  },
-  stepIndicator: {
-    fontSize: '11px',
-    fontWeight: '600',
-    color: colors.stepIndicator,
-    backgroundColor: '#f5f5f5',
-    padding: '4px 8px',
-    borderRadius: '2px',
-    letterSpacing: '0.5px',
   },
   sectionTitle: {
-    fontSize: '15px',
+    fontSize: '14px',
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
-    lineHeight: '1.4',
     letterSpacing: '0.2px',
   },
   fieldGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-    gap: '6px',
+    gridTemplateColumns: '1fr',
+    gap: '20px',
   },
   field: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '2px',
-    minWidth: 0,
-    overflow: 'hidden',
+    gap: '8px',
   },
   label: {
-    fontSize: '13px',
+    fontSize: '14px',
     fontWeight: '500',
     color: colors.textPrimary,
-    marginBottom: '6px',
     lineHeight: '1.4',
-    display: 'flex',
-    alignItems: 'baseline',
-    gap: '4px',
   },
   unit: {
-    fontSize: '12px',
+    fontSize: '13px',
     color: colors.textSecondary,
     fontWeight: '400',
-    marginLeft: '2px',
   },
   required: {
     color: colors.error,
-    fontSize: '13px',
+    fontSize: '14px',
     fontWeight: '600',
-    marginLeft: '2px',
+  },
+  inputWrapper: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
   },
   input: {
-    padding: '10px 12px',
-    fontSize: '14px',
+    flex: 1,
+    padding: '12px 80px 12px 16px', // 右側留空間給單位
+    fontSize: '16px', // 手機友善，避免自動縮放
     border: `1px solid ${colors.inputBorder}`,
-    borderRadius: '2px',
+    borderRadius: '4px',
     outline: 'none',
     transition: 'border-color 0.2s, box-shadow 0.2s',
     backgroundColor: colors.input,
     color: colors.textPrimary,
-    width: '100%',
-    height: '40px',
+    minHeight: '44px', // 手機友善觸控目標
+    boxSizing: 'border-box',
     WebkitAppearance: 'none',
     MozAppearance: 'textfield',
-    boxSizing: 'border-box',
-    fontFamily: 'inherit',
+  },
+  inputSuffix: {
+    position: 'absolute',
+    right: '16px',
+    fontSize: '14px',
+    color: colors.textSecondary,
+    pointerEvents: 'none',
+    backgroundColor: 'transparent',
+    paddingLeft: '4px',
+    whiteSpace: 'nowrap',
   },
   inputError: {
     borderColor: colors.error,
     backgroundColor: colors.errorBg,
-    borderWidth: '1px',
   },
   radioGroup: {
     display: 'flex',
-    gap: '16px',
-    marginTop: '4px',
+    gap: '12px',
     flexWrap: 'wrap',
   },
   radioLabel: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-    fontSize: '14px',
+    fontSize: '15px',
     cursor: 'pointer',
     color: colors.textPrimary,
-    padding: '8px 12px',
-    borderRadius: '2px',
-    transition: 'background-color 0.2s',
-    minHeight: '40px',
-    border: `1px solid ${colors.sectionBorder}`,
+    padding: '12px 16px',
+    borderRadius: '4px',
+    border: `1px solid ${colors.inputBorder}`,
     backgroundColor: colors.input,
+    minHeight: '44px',
+    transition: 'background-color 0.2s, border-color 0.2s',
+    flex: '1 1 auto',
+    minWidth: '120px',
+  },
+  radioLabelSelected: {
+    borderColor: colors.inputFocus,
+    backgroundColor: '#f0f7ff',
   },
   radio: {
-    width: '18px',
-    height: '18px',
+    width: '20px',
+    height: '20px',
     cursor: 'pointer',
     accentColor: colors.inputFocus,
+    flexShrink: 0,
   },
   errorText: {
-    fontSize: '12px',
+    fontSize: '13px',
     color: colors.error,
-    marginTop: '4px',
     fontWeight: '500',
     lineHeight: '1.4',
   },
   helperText: {
     fontSize: '12px',
     color: colors.textSecondary,
-    marginTop: '4px',
-    fontStyle: 'normal',
     lineHeight: '1.4',
   },
   submitError: {
     padding: '12px 16px',
     backgroundColor: colors.errorBg,
     border: `1px solid ${colors.error}`,
-    borderRadius: '2px',
+    borderRadius: '4px',
     color: colors.error,
-    marginBottom: '16px',
+    marginTop: '24px',
   },
   errorPre: {
     margin: 0,
@@ -783,31 +830,38 @@ const styles: { [key: string]: React.CSSProperties } = {
   disclaimer: {
     padding: '12px 16px',
     backgroundColor: colors.disclaimer,
-    border: `1px solid ${colors.disclaimerBorder}`,
-    borderRadius: '2px',
-    marginTop: '16px',
-    marginBottom: '16px',
+    borderRadius: '4px',
+    marginTop: '24px',
   },
   disclaimerText: {
     fontSize: '12px',
-    color: colors.textPrimary,
+    color: colors.disclaimerText,
     margin: 0,
     lineHeight: '1.5',
   },
+  submitContainer: {
+    position: 'sticky',
+    bottom: 0,
+    backgroundColor: colors.background,
+    padding: '16px',
+    marginTop: '24px',
+    marginLeft: '-16px',
+    marginRight: '-16px',
+    borderTop: `1px solid ${colors.divider}`,
+    boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.05)',
+  },
   submitButton: {
+    width: '100%',
     padding: '14px 24px',
-    fontSize: '15px',
+    fontSize: '16px',
     fontWeight: '600',
     color: '#ffffff',
     backgroundColor: colors.button,
     border: 'none',
-    borderRadius: '2px',
+    borderRadius: '4px',
     cursor: 'pointer',
     transition: 'background-color 0.2s',
-    alignSelf: 'stretch',
     minHeight: '48px',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    marginTop: '8px',
     letterSpacing: '0.3px',
   },
   submitButtonDisabled: {
@@ -816,4 +870,3 @@ const styles: { [key: string]: React.CSSProperties } = {
     opacity: 0.6,
   },
 }
-
