@@ -3,16 +3,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAllPatients, deletePatient, PatientData } from '@/lib/patientStorage'
+import { classifyRisk, RISK_CLASSIFICATION } from '@/lib/riskClassification'
 
-// 馬卡龍色調配色
+// 馬卡龍色調配色（背景保持，但風險顏色使用新的低彩度顏色）
 const colors = {
   background: 'linear-gradient(135deg, #ffeef8 0%, #e8f4f8 100%)',
   card: '#ffffff',
   cardBorder: 'rgba(255, 182, 193, 0.3)',
   titleBg: 'linear-gradient(135deg, #ffb6c1 0%, #87ceeb 100%)',
-  lowRisk: '#d4edda',
-  mediumRisk: '#fff3cd',
-  highRisk: '#f8d7da',
   button: 'linear-gradient(135deg, #c8a2c8 0%, #a8c8e8 100%)',
   textPrimary: '#6b4c6b',
   textSecondary: '#8b7a8b',
@@ -54,18 +52,22 @@ export default function WardPage() {
     router.push('/dashboard')
   }
 
+  // 使用集中管理的風險分級邏輯（與 dashboard 一致）
+  const getRiskClassification = (probability?: number) => {
+    if (probability === undefined || probability === null) return null
+    return classifyRisk(probability)
+  }
+
   const getRiskColor = (probability?: number) => {
-    if (!probability) return colors.mediumRisk
-    if (probability < 0.3) return colors.lowRisk
-    if (probability < 0.7) return colors.mediumRisk
-    return colors.highRisk
+    const classification = getRiskClassification(probability)
+    if (!classification) return RISK_CLASSIFICATION.moderate.color.background
+    return classification.config.color.background
   }
 
   const getRiskLevelText = (probability?: number) => {
-    if (!probability) return '未知'
-    if (probability < 0.3) return '低風險'
-    if (probability < 0.7) return '中風險'
-    return '高風險'
+    const classification = getRiskClassification(probability)
+    if (!classification) return '未知'
+    return classification.config.label
   }
 
   const formatDateTime = (timestamp?: string) => {
@@ -110,7 +112,10 @@ export default function WardPage() {
           </div>
           <div style={styles.statItem}>
             <div style={styles.statValue}>
-              {patients.filter(p => (p.result.probability || 0) >= 0.7).length}
+              {patients.filter(p => {
+                const prob = p.result.probability || 0
+                return prob >= RISK_CLASSIFICATION.high.threshold
+              }).length}
             </div>
             <div style={styles.statLabel}>高風險</div>
           </div>
@@ -118,14 +123,17 @@ export default function WardPage() {
             <div style={styles.statValue}>
               {patients.filter(p => {
                 const prob = p.result.probability || 0
-                return prob >= 0.3 && prob < 0.7
+                return prob >= RISK_CLASSIFICATION.low.threshold && prob < RISK_CLASSIFICATION.moderate.threshold
               }).length}
             </div>
-            <div style={styles.statLabel}>中風險</div>
+            <div style={styles.statLabel}>中等風險</div>
           </div>
           <div style={styles.statItem}>
             <div style={styles.statValue}>
-              {patients.filter(p => (p.result.probability || 0) < 0.3).length}
+              {patients.filter(p => {
+                const prob = p.result.probability || 0
+                return prob < RISK_CLASSIFICATION.low.threshold
+              }).length}
             </div>
             <div style={styles.statLabel}>低風險</div>
           </div>
@@ -163,7 +171,9 @@ export default function WardPage() {
           <div style={styles.patientGrid} className="patient-grid">
             {patients.map((patient) => {
               const probability = patient.result.probability || 0
-              const riskColor = getRiskColor(probability)
+              const riskClassification = getRiskClassification(probability)
+              const riskColor = riskClassification?.config.color.background || RISK_CLASSIFICATION.moderate.color.background
+              const riskBorderColor = riskClassification?.config.color.border || RISK_CLASSIFICATION.moderate.color.border
               const riskLevelText = getRiskLevelText(probability)
 
               return (
@@ -173,7 +183,7 @@ export default function WardPage() {
                   style={{
                     ...styles.patientCard,
                     backgroundColor: riskColor,
-                    borderColor: riskColor,
+                    borderColor: riskBorderColor,
                   }}
                   onClick={() => handleViewDetail(patient)}
                 >
@@ -495,14 +505,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   disclaimer: {
     padding: '16px',
-    backgroundColor: colors.mediumRisk,
-    border: `1.5px solid #ffd700`,
+    backgroundColor: '#fff9e6',
+    border: `1.5px solid #e8d4a0`,
     borderRadius: '8px',
     marginTop: '24px',
   },
   disclaimerText: {
     fontSize: '13px',
-    color: '#8b6914',
+    color: colors.textSecondary,
     margin: 0,
     lineHeight: '1.6',
   },
