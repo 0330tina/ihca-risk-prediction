@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { classifyRisk } from '@/lib/riskClassification'
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,20 +78,15 @@ export async function POST(request: NextRequest) {
     // 計算機率 p = 1 / (1 + exp(-logit))
     const probability = 1 / (1 + Math.exp(-logit))
 
-    // 判斷風險等級
-    let riskLevel: string
-    if (probability < 0.3) {
-      riskLevel = '低風險'
-    } else if (probability < 0.7) {
-      riskLevel = '中風險'
-    } else {
-      riskLevel = '高風險'
-    }
+    // 使用集中管理的風險分級邏輯
+    const riskClassification = classifyRisk(probability)
 
     const result = {
       logit: logit,
       probability: probability,
-      riskLevel: riskLevel,
+      riskLevel: riskClassification.config.label,
+      riskLevelEn: riskClassification.config.labelEn,
+      riskLevelKey: riskClassification.level,
       timestamp: new Date().toISOString(),
       inputData: body,
     }

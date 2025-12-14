@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { classifyRisk, RISK_CLASSIFICATION_DESCRIPTION, type RiskClassificationResult } from '@/lib/riskClassification'
 
 // 馬卡龍色調配色（與輸入頁面一致）
 const colors = {
@@ -9,21 +10,19 @@ const colors = {
   card: '#ffffff',
   cardBorder: 'rgba(255, 182, 193, 0.3)',
   titleBg: 'linear-gradient(135deg, #ffb6c1 0%, #87ceeb 100%)',
-  resultCard: '#fff0f5',
-  resultCardBorder: 'rgba(255, 182, 193, 0.5)',
   button: 'linear-gradient(135deg, #c8a2c8 0%, #a8c8e8 100%)',
-  lowRisk: '#d4edda',
-  mediumRisk: '#fff3cd',
-  highRisk: '#f8d7da',
   textPrimary: '#6b4c6b',
   textSecondary: '#8b7a8b',
-  disclaimerBorder: '#ffd700',
+  disclaimerBg: '#fff9e6',
+  disclaimerBorder: '#e8d4a0',
 }
 
 interface ResultData {
   logit?: number
   probability?: number
   riskLevel?: string
+  riskLevelEn?: string
+  riskLevelKey?: 'low' | 'moderate' | 'high'
   timestamp?: string
   inputData?: any
 }
@@ -53,20 +52,10 @@ export default function DashboardPage() {
     }
   }, [router])
 
-  // 根據風險機率判斷風險等級顏色
-  const getRiskColor = (probability?: number) => {
-    if (!probability) return colors.mediumRisk
-    if (probability < 0.3) return colors.lowRisk
-    if (probability < 0.7) return colors.mediumRisk
-    return colors.highRisk
-  }
-
-  // 根據風險機率判斷風險等級文字
-  const getRiskLevelText = (probability?: number) => {
-    if (!probability) return '未知'
-    if (probability < 0.3) return '低風險'
-    if (probability < 0.7) return '中風險'
-    return '高風險'
+  // 使用集中管理的風險分級邏輯
+  const getRiskClassification = (probability?: number): RiskClassificationResult | null => {
+    if (probability === undefined || probability === null) return null
+    return classifyRisk(probability)
   }
 
   // 格式化日期時間
@@ -101,8 +90,30 @@ export default function DashboardPage() {
   }
 
   const probability = result.probability || 0
-  const riskColor = getRiskColor(probability)
-  const riskLevelText = result.riskLevel || getRiskLevelText(probability)
+  const riskClassification = getRiskClassification(probability)
+  
+  // 如果沒有風險分級結果，顯示錯誤
+  if (!riskClassification) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <div style={styles.errorMessage}>
+            <p>無法讀取風險預測結果，請重新計算。</p>
+            <button
+              onClick={() => router.push('/input')}
+              style={styles.primaryButton}
+            >
+              返回輸入頁面
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const riskConfig = riskClassification.config
+  const riskLevelText = result.riskLevel || riskConfig.label
+  const riskLevelEn = result.riskLevelEn || riskConfig.labelEn
 
   return (
     <div style={styles.container}>
@@ -114,30 +125,87 @@ export default function DashboardPage() {
         </div>
 
         {/* 主要結果卡片 */}
-        <div style={{ ...styles.resultCard, backgroundColor: riskColor }}>
+        <div style={{
+          ...styles.resultCard,
+          backgroundColor: riskConfig.color.background,
+          borderColor: riskConfig.color.border,
+        }}>
           <div style={styles.resultHeader}>
             <h2 style={styles.resultTitle}>預測風險機率</h2>
             <div style={styles.probabilityCircle}>
-              <div style={styles.probabilityValue}>
-                {(probability * 100).toFixed(1)}%
+              <div style={{
+                ...styles.probabilityValue,
+                color: riskConfig.color.text,
+              }}>
+                {riskClassification.probabilityPercent}%
               </div>
             </div>
           </div>
           
-          <div style={styles.riskLevelBadge}>
-            <span style={styles.riskLevelText}>{riskLevelText}</span>
+          {/* 風險分級標籤 */}
+          <div style={{
+            ...styles.riskLevelBadge,
+            backgroundColor: riskConfig.color.background,
+            borderColor: riskConfig.color.border,
+          }}>
+            <span style={{
+              ...styles.riskLevelText,
+              color: riskConfig.color.text,
+            }}>
+              {riskLevelText}
+            </span>
+            {riskLevelEn && (
+              <span style={{
+                ...styles.riskLevelTextEn,
+                color: riskConfig.color.text,
+              }}>
+                {riskLevelEn}
+              </span>
+            )}
           </div>
 
-          <div style={styles.resultDetails}>
-            <div style={styles.detailItem}>
-              <span style={styles.detailLabel}>Logit 值：</span>
-              <span style={styles.detailValue}>{result.logit?.toFixed(4) || 'N/A'}</span>
+          {/* 臨床解讀 */}
+          <div style={styles.interpretationBox}>
+            <div style={{
+              ...styles.interpretationIcon,
+              color: riskConfig.color.text,
+            }}>
+              ℹ️
             </div>
-            <div style={styles.detailItem}>
-              <span style={styles.detailLabel}>計算時間：</span>
-              <span style={styles.detailValue}>{formatDateTime(result.timestamp)}</span>
+            <div style={styles.interpretationText}>
+              <div style={styles.interpretationTitle}>臨床解讀</div>
+              <div style={{
+                ...styles.interpretationContent,
+                color: riskConfig.color.text,
+              }}>
+                {riskConfig.interpretation}
+              </div>
             </div>
           </div>
+
+          {/* 模型說明 */}
+          <div style={styles.modelDescription}>
+            <p style={styles.modelDescriptionText}>
+              {RISK_CLASSIFICATION_DESCRIPTION}
+            </p>
+          </div>
+
+          {/* 進階資訊（可折疊） */}
+          <details style={styles.advancedInfo}>
+            <summary style={styles.advancedInfoSummary}>
+              進階資訊（供研究人員參考）
+            </summary>
+            <div style={styles.advancedInfoContent}>
+              <div style={styles.detailItem}>
+                <span style={styles.detailLabel}>Logit 值：</span>
+                <span style={styles.detailValue}>{result.logit?.toFixed(4) || 'N/A'}</span>
+              </div>
+              <div style={styles.detailItem}>
+                <span style={styles.detailLabel}>計算時間：</span>
+                <span style={styles.detailValue}>{formatDateTime(result.timestamp)}</span>
+              </div>
+            </div>
+          </details>
         </div>
 
         {/* 輸入資料摘要（可選） */}
@@ -167,11 +235,23 @@ export default function DashboardPage() {
 
         {/* 免責聲明 */}
         <div style={styles.disclaimer}>
-          <p style={styles.disclaimerText}>
-            <strong>免責聲明：</strong>
-            此為研究/臨床輔助工具，非醫囑。計算結果僅供參考，不應作為臨床決策的唯一依據。
-            請結合臨床專業判斷使用。
-          </p>
+          <div style={styles.disclaimerHeader}>
+            <span style={styles.disclaimerIcon}>⚠️</span>
+            <strong style={styles.disclaimerTitle}>醫療免責與研究聲明</strong>
+          </div>
+          <div style={styles.disclaimerContent}>
+            <p style={styles.disclaimerText}>
+              <strong>研究性質：</strong>本系統為學術研究工具，非醫療設備，計算結果僅供臨床參考使用。
+            </p>
+            <p style={styles.disclaimerText}>
+              <strong>臨床決策：</strong>預測結果不應作為臨床決策的唯一依據。
+              所有醫療處置應由臨床醫師根據完整臨床評估、專業判斷及臨床指引進行。
+            </p>
+            <p style={styles.disclaimerText}>
+              <strong>責任聲明：</strong>本系統開發者與提供者不對任何臨床決策或醫療結果承擔責任。
+              使用者應自行評估模型適用性，並對臨床決策負完全責任。
+            </p>
+          </div>
         </div>
 
         {/* 操作按鈕 */}
@@ -256,8 +336,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '12px',
     padding: '32px',
     marginBottom: '24px',
-    border: `2px solid ${colors.resultCardBorder}`,
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+    border: '2px solid',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
   },
   resultHeader: {
     display: 'flex',
@@ -288,24 +368,89 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: colors.textPrimary,
   },
   riskLevelBadge: {
-    display: 'inline-block',
-    padding: '8px 24px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '12px 24px',
     borderRadius: '20px',
-    backgroundColor: '#ffffff',
-    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
-    marginBottom: '20px',
+    border: '1px solid',
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+    marginBottom: '24px',
   },
   riskLevelText: {
-    fontSize: '18px',
+    fontSize: '20px',
     fontWeight: '600',
+  },
+  riskLevelTextEn: {
+    fontSize: '14px',
+    fontWeight: '400',
+    opacity: 0.8,
+  },
+  interpretationBox: {
+    display: 'flex',
+    gap: '12px',
+    padding: '16px',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: '8px',
+    marginBottom: '20px',
+    border: '1px solid rgba(0, 0, 0, 0.05)',
+  },
+  interpretationIcon: {
+    fontSize: '20px',
+    flexShrink: 0,
+  },
+  interpretationText: {
+    flex: 1,
+  },
+  interpretationTitle: {
+    fontSize: '14px',
+    fontWeight: '600',
+    marginBottom: '8px',
     color: colors.textPrimary,
+  },
+  interpretationContent: {
+    fontSize: '15px',
+    lineHeight: '1.6',
+    fontWeight: '400',
+  },
+  modelDescription: {
+    padding: '12px 16px',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: '8px',
+    marginBottom: '20px',
+    border: '1px solid rgba(0, 0, 0, 0.05)',
+  },
+  modelDescriptionText: {
+    fontSize: '13px',
+    lineHeight: '1.6',
+    color: colors.textSecondary,
+    margin: 0,
+    fontStyle: 'italic',
+  },
+  advancedInfo: {
+    marginTop: '20px',
+    paddingTop: '20px',
+    borderTop: `1px solid ${colors.cardBorder}`,
+  },
+  advancedInfoSummary: {
+    fontSize: '14px',
+    fontWeight: '500',
+    color: colors.textSecondary,
+    cursor: 'pointer',
+    userSelect: 'none' as const,
+    padding: '8px 0',
+  },
+  advancedInfoContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    paddingTop: '12px',
   },
   resultDetails: {
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    paddingTop: '20px',
-    borderTop: `1px solid ${colors.cardBorder}`,
   },
   detailItem: {
     display: 'flex',
@@ -354,18 +499,41 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: colors.textPrimary,
     fontWeight: '500',
   },
+  errorMessage: {
+    textAlign: 'center' as const,
+    padding: '40px',
+  },
   disclaimer: {
-    padding: '16px',
-    backgroundColor: colors.mediumRisk,
+    padding: '20px',
+    backgroundColor: colors.disclaimerBg,
     border: `1.5px solid ${colors.disclaimerBorder}`,
     borderRadius: '8px',
     marginBottom: '24px',
   },
+  disclaimerHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '12px',
+  },
+  disclaimerIcon: {
+    fontSize: '18px',
+  },
+  disclaimerTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  disclaimerContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+  },
   disclaimerText: {
     fontSize: '13px',
-    color: '#8b6914',
+    color: colors.textSecondary,
     margin: 0,
-    lineHeight: '1.6',
+    lineHeight: '1.7',
   },
   buttonGroup: {
     display: 'flex',
