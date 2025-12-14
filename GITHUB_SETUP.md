@@ -46,7 +46,7 @@ git commit -m "Initial commit: IHCA risk prediction system with ward dashboard"
 3. 填寫以下資訊：
    ```
    Repository name: ihca-risk-prediction
-   Description: 非預期心跳驟停風險預測系統 - Next.js 14 + TypeScript + 病房電子看板
+   Description: 非預期心臟驟停風險預測系統 - Next.js 14 + TypeScript + 病房電子看板
    Visibility: Public（公開）或 Private（私有）
    ```
 4. **重要**：不要勾選以下選項：

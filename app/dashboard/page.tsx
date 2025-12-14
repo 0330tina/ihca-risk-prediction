@@ -110,7 +110,7 @@ export default function DashboardPage() {
         {/* 標題區 */}
         <div style={styles.header}>
           <h1 style={styles.title}>風險預測結果</h1>
-          <p style={styles.subtitle}>非預期心跳驟停風險評估</p>
+          <p style={styles.subtitle}>非預期心臟驟停風險評估</p>
         </div>
 
         {/* 主要結果卡片 */}

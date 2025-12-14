@@ -3,7 +3,7 @@ import { ReactNode } from 'react'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: '非預期心跳驟停風險預測',
+  title: '非預期心臟驟停風險預測',
   description: '入院首日邏輯式回歸計算工具',
   viewport: {
     width: 'device-width',

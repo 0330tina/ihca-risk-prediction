@@ -340,22 +340,25 @@ export default function InputPage() {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.header}>
-          <h1 style={styles.title}>非預期心跳驟停風險預測</h1>
+          <h1 style={styles.title}>非預期心臟驟停風險預測</h1>
           <p style={styles.subtitle}>入院首日邏輯式回歸計算</p>
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formContent} className="form-content-grid">
             {/* 基本資料 */}
-            <section style={{ ...styles.section, backgroundColor: colors.section1 }}>
-              <h2 style={styles.sectionTitle}>基本資料</h2>
+            <section style={styles.section}>
+              <div style={styles.sectionHeader}>
+                <span style={styles.stepIndicator}>1/4</span>
+                <h2 style={styles.sectionTitle}>基本資料</h2>
+              </div>
               <div style={styles.fieldGrid} className="field-grid">
                 {fieldConfigs.slice(0, 2).map((config) => (
                   <div key={config.key} style={styles.field}>
                     <label style={styles.label}>
                       {config.label}
-                      {config.unit && <span style={styles.unit}> ({config.unit})</span>}
                       {config.required && <span style={styles.required}> *</span>}
+                      {config.unit && <span style={styles.unit}> {config.unit}</span>}
                     </label>
                     {config.type === 'number' && (
                       <input
@@ -375,7 +378,7 @@ export default function InputPage() {
                     {config.type === 'radio' && (
                       <div style={styles.radioGroup}>
                         {config.options?.map((option) => (
-                          <label key={option.value} style={styles.radioLabel}>
+                          <label key={option.value} style={styles.radioLabel} className="radio-label">
                             <input
                               type="radio"
                               name={config.key}
@@ -401,8 +404,11 @@ export default function InputPage() {
             </section>
 
             {/* 病史 */}
-            <section style={{ ...styles.section, backgroundColor: colors.section2 }}>
-              <h2 style={styles.sectionTitle}>病史</h2>
+            <section style={styles.section}>
+              <div style={styles.sectionHeader}>
+                <span style={styles.stepIndicator}>2/4</span>
+                <h2 style={styles.sectionTitle}>病史</h2>
+              </div>
               <div style={styles.fieldGrid} className="field-grid">
                 {fieldConfigs.slice(2, 5).map((config) => (
                   <div key={config.key} style={styles.field}>
@@ -412,7 +418,7 @@ export default function InputPage() {
                     </label>
                     <div style={styles.radioGroup}>
                       {config.options?.map((option) => (
-                        <label key={option.value} style={styles.radioLabel}>
+                        <label key={option.value} style={styles.radioLabel} className="radio-label">
                           <input
                             type="radio"
                             name={config.key}
@@ -434,15 +440,18 @@ export default function InputPage() {
             </section>
 
             {/* 生命徵象 */}
-            <section style={{ ...styles.section, backgroundColor: colors.section3 }}>
-              <h2 style={styles.sectionTitle}>生命徵象</h2>
+            <section style={styles.section}>
+              <div style={styles.sectionHeader}>
+                <span style={styles.stepIndicator}>3/4</span>
+                <h2 style={styles.sectionTitle}>生命徵象</h2>
+              </div>
               <div style={styles.fieldGrid} className="field-grid">
                 {fieldConfigs.slice(5, 9).map((config) => (
                   <div key={config.key} style={styles.field}>
                     <label style={styles.label}>
                       {config.label}
-                      {config.unit && <span style={styles.unit}> ({config.unit})</span>}
                       {config.required && <span style={styles.required}> *</span>}
+                      {config.unit && <span style={styles.unit}> {config.unit}</span>}
                     </label>
                     <input
                       type="number"
@@ -466,15 +475,18 @@ export default function InputPage() {
             </section>
 
             {/* 檢驗 */}
-            <section style={{ ...styles.section, backgroundColor: colors.section4 }}>
-              <h2 style={styles.sectionTitle}>檢驗</h2>
+            <section style={styles.section}>
+              <div style={styles.sectionHeader}>
+                <span style={styles.stepIndicator}>4/4</span>
+                <h2 style={styles.sectionTitle}>檢驗</h2>
+              </div>
               <div style={styles.fieldGrid} className="field-grid">
                 {fieldConfigs.slice(9).map((config) => (
                   <div key={config.key} style={styles.field}>
                     <label style={styles.label}>
                       {config.label}
-                      {config.unit && <span style={styles.unit}> ({config.unit})</span>}
                       {config.required && <span style={styles.required}> *</span>}
+                      {config.unit && <span style={styles.unit}> {config.unit}</span>}
                     </label>
                     <input
                       type="number"
@@ -533,37 +545,40 @@ export default function InputPage() {
   )
 }
 
-// 馬卡龍色調配色
+// 臨床決策支援系統（CDSS）配色 - 中性、冷靜、醫療風格
 const colors = {
-  background: 'linear-gradient(135deg, #ffeef8 0%, #e8f4f8 100%)',
+  background: '#f8f9fa', // 極淺灰背景
   card: '#ffffff',
-  cardBorder: 'rgba(255, 182, 193, 0.3)',
-  section1: '#fff0f5', // 淡粉色
-  section2: '#e6f3ff', // 淡藍色
-  section3: '#f0fff4', // 淡綠色
-  section4: '#fffacd', // 淡黃色
-  titleBg: 'linear-gradient(135deg, #ffb6c1 0%, #87ceeb 100%)',
+  cardBorder: '#e0e0e0', // 中性灰邊框
+  headerBg: '#2c3e50', // 深藍灰標題背景（醫療系統常用）
+  headerText: '#ffffff',
+  sectionBorder: '#d0d0d0', // 細線區隔
   input: '#ffffff',
-  inputBorder: '#d4a5c7',
-  inputFocus: '#ffb6c1',
-  button: 'linear-gradient(135deg, #c8a2c8 0%, #a8c8e8 100%)',
-  buttonHover: 'linear-gradient(135deg, #b892b8 0%, #98b8d8 100%)',
-  error: '#ff6b9d',
-  errorBg: '#ffeef8',
-  disclaimer: '#fff8dc',
-  disclaimerBorder: '#ffd700',
+  inputBorder: '#b0b0b0', // 中性輸入框邊框
+  inputFocus: '#4a90e2', // 深藍 focus（醫療系統常用）
+  button: '#4a90e2', // 深藍按鈕（專業、可信）
+  buttonHover: '#357abd',
+  buttonDisabled: '#b0b0b0',
+  error: '#d32f2f', // 標準錯誤紅（僅用於錯誤提示）
+  errorBg: '#ffebee', // 極淺紅背景（錯誤提示）
+  textPrimary: '#212121', // 深灰主文字
+  textSecondary: '#616161', // 中灰次文字
+  textTertiary: '#9e9e9e', // 淺灰輔助文字
+  disclaimer: '#fff3cd', // 極淺黃（低對比提醒）
+  disclaimerBorder: '#ffc107', // 中性黃邊框
+  stepIndicator: '#757575', // 步驟指示器顏色
 }
 
 // 樣式定義
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    padding: '8px',
+    padding: '16px',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'flex-start',
-    background: colors.background,
-    WebkitOverflowScrolling: 'touch', // iOS 平滑滾動
+    backgroundColor: colors.background,
+    WebkitOverflowScrolling: 'touch',
     paddingTop: 'env(safe-area-inset-top)',
     paddingBottom: 'env(safe-area-inset-bottom)',
   },
@@ -571,37 +586,38 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '100%',
     maxWidth: '1400px',
     backgroundColor: colors.card,
-    borderRadius: '12px',
-    padding: '16px',
-    boxShadow: '0 4px 20px rgba(255, 182, 193, 0.2)',
+    borderRadius: '4px',
+    padding: '24px',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
     border: `1px solid ${colors.cardBorder}`,
-    maxHeight: 'calc(100vh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
+    maxHeight: 'calc(100vh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom))',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    WebkitOverflowScrolling: 'touch', // iOS 平滑滾動
+    WebkitOverflowScrolling: 'touch',
   },
   header: {
-    background: colors.titleBg,
-    borderRadius: '10px',
-    padding: '10px 14px',
-    marginBottom: '10px',
-    textAlign: 'center',
+    backgroundColor: colors.headerBg,
+    borderRadius: '2px',
+    padding: '16px 20px',
+    marginBottom: '24px',
+    textAlign: 'left',
   },
   title: {
-    fontSize: '18px',
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: '2px',
-    textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    lineHeight: '1.2',
+    fontSize: '20px',
+    fontWeight: '600',
+    color: colors.headerText,
+    marginBottom: '4px',
+    lineHeight: '1.3',
+    letterSpacing: '0.3px',
   },
   subtitle: {
-    fontSize: '11px',
-    color: '#ffffff',
-    opacity: 0.95,
+    fontSize: '13px',
+    color: colors.headerText,
+    opacity: 0.9,
     margin: 0,
-    lineHeight: '1.3',
+    lineHeight: '1.4',
+    fontWeight: '400',
   },
   form: {
     display: 'flex',
@@ -621,145 +637,183 @@ const styles: { [key: string]: React.CSSProperties } = {
   section: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
-    padding: '8px',
-    borderRadius: '8px',
-    border: `2px solid ${colors.cardBorder}`,
+    gap: '12px',
+    padding: '16px',
+    borderRadius: '2px',
+    border: `1px solid ${colors.sectionBorder}`,
+    backgroundColor: colors.card,
     minHeight: 'fit-content',
+    marginBottom: '16px',
+  },
+  sectionHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '8px',
+    paddingBottom: '12px',
+    borderBottom: `1px solid ${colors.sectionBorder}`,
+  },
+  stepIndicator: {
+    fontSize: '11px',
+    fontWeight: '600',
+    color: colors.stepIndicator,
+    backgroundColor: '#f5f5f5',
+    padding: '4px 8px',
+    borderRadius: '2px',
+    letterSpacing: '0.5px',
   },
   sectionTitle: {
-    fontSize: '13px',
+    fontSize: '15px',
     fontWeight: '600',
-    color: '#8b4789',
-    marginBottom: '4px',
-    paddingBottom: '3px',
-    borderBottom: `2px solid ${colors.inputBorder}`,
-    lineHeight: '1.3',
+    color: colors.textPrimary,
+    margin: 0,
+    lineHeight: '1.4',
+    letterSpacing: '0.2px',
   },
   fieldGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
     gap: '6px',
   },
   field: {
     display: 'flex',
     flexDirection: 'column',
     gap: '2px',
+    minWidth: 0,
+    overflow: 'hidden',
   },
   label: {
-    fontSize: '11px',
+    fontSize: '13px',
     fontWeight: '500',
-    color: '#6b4c6b',
-    marginBottom: '1px',
-    lineHeight: '1.3',
+    color: colors.textPrimary,
+    marginBottom: '6px',
+    lineHeight: '1.4',
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '4px',
   },
   unit: {
-    fontSize: '10px',
-    color: '#8b7a8b',
-    fontWeight: 'normal',
+    fontSize: '12px',
+    color: colors.textSecondary,
+    fontWeight: '400',
+    marginLeft: '2px',
   },
   required: {
     color: colors.error,
-    fontSize: '12px',
+    fontSize: '13px',
+    fontWeight: '600',
+    marginLeft: '2px',
   },
   input: {
-    padding: '9px 11px',
-    fontSize: '12px',
-    border: `1.5px solid ${colors.inputBorder}`,
-    borderRadius: '6px',
+    padding: '10px 12px',
+    fontSize: '14px',
+    border: `1px solid ${colors.inputBorder}`,
+    borderRadius: '2px',
     outline: 'none',
-    transition: 'all 0.2s',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
     backgroundColor: colors.input,
-    color: '#333',
+    color: colors.textPrimary,
     width: '100%',
+    height: '40px',
     WebkitAppearance: 'none',
     MozAppearance: 'textfield',
-    minHeight: '42px',
+    boxSizing: 'border-box',
+    fontFamily: 'inherit',
   },
   inputError: {
     borderColor: colors.error,
     backgroundColor: colors.errorBg,
+    borderWidth: '1px',
   },
   radioGroup: {
     display: 'flex',
-    gap: '10px',
-    marginTop: '2px',
+    gap: '16px',
+    marginTop: '4px',
     flexWrap: 'wrap',
   },
   radioLabel: {
     display: 'flex',
     alignItems: 'center',
-    gap: '5px',
-    fontSize: '12px',
+    gap: '8px',
+    fontSize: '14px',
     cursor: 'pointer',
-    color: '#6b4c6b',
-    padding: '4px 8px',
-    borderRadius: '5px',
+    color: colors.textPrimary,
+    padding: '8px 12px',
+    borderRadius: '2px',
     transition: 'background-color 0.2s',
-    minHeight: '36px',
+    minHeight: '40px',
+    border: `1px solid ${colors.sectionBorder}`,
+    backgroundColor: colors.input,
   },
   radio: {
-    width: '16px',
-    height: '16px',
+    width: '18px',
+    height: '18px',
     cursor: 'pointer',
     accentColor: colors.inputFocus,
   },
   errorText: {
-    fontSize: '11px',
+    fontSize: '12px',
     color: colors.error,
-    marginTop: '2px',
+    marginTop: '4px',
     fontWeight: '500',
+    lineHeight: '1.4',
   },
   helperText: {
-    fontSize: '11px',
-    color: '#8b7a8b',
-    marginTop: '2px',
-    fontStyle: 'italic',
+    fontSize: '12px',
+    color: colors.textSecondary,
+    marginTop: '4px',
+    fontStyle: 'normal',
+    lineHeight: '1.4',
   },
   submitError: {
-    padding: '10px 14px',
+    padding: '12px 16px',
     backgroundColor: colors.errorBg,
-    border: `1.5px solid ${colors.error}`,
-    borderRadius: '8px',
+    border: `1px solid ${colors.error}`,
+    borderRadius: '2px',
     color: colors.error,
+    marginBottom: '16px',
   },
   errorPre: {
     margin: 0,
     fontSize: '13px',
     whiteSpace: 'pre-wrap',
     fontFamily: 'inherit',
+    lineHeight: '1.5',
   },
   disclaimer: {
-    padding: '8px 10px',
+    padding: '12px 16px',
     backgroundColor: colors.disclaimer,
-    border: `1.5px solid ${colors.disclaimerBorder}`,
-    borderRadius: '6px',
-    marginTop: '4px',
+    border: `1px solid ${colors.disclaimerBorder}`,
+    borderRadius: '2px',
+    marginTop: '16px',
+    marginBottom: '16px',
   },
   disclaimerText: {
-    fontSize: '10px',
-    color: '#8b6914',
+    fontSize: '12px',
+    color: colors.textPrimary,
     margin: 0,
-    lineHeight: '1.4',
+    lineHeight: '1.5',
   },
   submitButton: {
-    padding: '12px 24px',
-    fontSize: '16px',
+    padding: '14px 24px',
+    fontSize: '15px',
     fontWeight: '600',
     color: '#ffffff',
-    background: colors.button,
+    backgroundColor: colors.button,
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '2px',
     cursor: 'pointer',
-    transition: 'all 0.3s',
+    transition: 'background-color 0.2s',
     alignSelf: 'stretch',
     minHeight: '48px',
-    boxShadow: '0 4px 12px rgba(200, 162, 200, 0.3)',
-    marginTop: '4px',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    marginTop: '8px',
+    letterSpacing: '0.3px',
   },
   submitButtonDisabled: {
-    opacity: 0.6,
+    backgroundColor: colors.buttonDisabled,
     cursor: 'not-allowed',
+    opacity: 0.6,
   },
 }
 

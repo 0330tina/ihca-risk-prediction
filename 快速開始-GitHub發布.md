@@ -144,7 +144,7 @@ git commit -m "Initial commit: IHCA risk prediction system"
 
 3. **填寫資訊：**
    - **Repository name**: `ihca-risk-prediction`（或您喜歡的名稱）
-   - **Description**: `非預期心跳驟停風險預測系統`
+   - **Description**: `非預期心臟驟停風險預測系統`
    - **選擇 Public 或 Private**
    - **⚠️ 重要：不要勾選以下選項：**
      - ❌ Add a README file

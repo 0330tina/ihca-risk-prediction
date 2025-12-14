@@ -99,7 +99,7 @@ export default function WardPage() {
         {/* 標題區 */}
         <div style={styles.header}>
           <h1 style={styles.title}>病房電子看板</h1>
-          <p style={styles.subtitle}>非預期心跳驟停風險監控</p>
+          <p style={styles.subtitle}>非預期心臟驟停風險監控</p>
         </div>
 
         {/* 統計資訊 */}

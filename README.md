@@ -1,4 +1,4 @@
-# 非預期心跳驟停風險預測系統
+# 非預期心臟驟停風險預測系統
 
 使用 Next.js 14 (App Router) + TypeScript 開發的風險預測輸入介面與病房電子看板系統。
 
@@ -94,7 +94,7 @@ git commit -m "Initial commit: IHCA risk prediction system"
 2. 點擊右上角的 **+** → **New repository**
 3. 填寫倉庫資訊：
    - Repository name: `ihca-risk-prediction` (或您喜歡的名稱)
-   - Description: `非預期心跳驟停風險預測系統 - Next.js 14 + TypeScript`
+   - Description: `非預期心臟驟停風險預測系統 - Next.js 14 + TypeScript`
    - 選擇 Public 或 Private
    - **不要**勾選 "Initialize this repository with a README"（因為我們已經有 README）
 4. 點擊 **Create repository**

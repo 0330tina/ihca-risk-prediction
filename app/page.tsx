@@ -25,7 +25,7 @@ export default function HomePage() {
           color: '#1a1a1a',
           marginBottom: '16px',
         }}>
-          非預期心跳驟停風險預測
+          非預期心臟驟停風險預測
         </h1>
         <p style={{
           fontSize: '16px',
