@@ -192,7 +192,9 @@ export default function WardPage() {
                     <button
                       onClick={(e) => handleDelete(patient.id, e)}
                       style={styles.deleteButton}
+                      className="delete-button-ward"
                       title="刪除"
+                      aria-label="刪除病人"
                     >
                       ✕
                     </button>
@@ -380,9 +382,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: '16px',
+    gap: '12px',
+    minHeight: 0,
   },
   patientInfo: {
     flex: 1,
+    minWidth: 0,
+    overflow: 'hidden',
   },
   patientName: {
     fontSize: '18px',
@@ -397,17 +403,34 @@ const styles: { [key: string]: React.CSSProperties } = {
   deleteButton: {
     width: '28px',
     height: '28px',
+    minWidth: '28px',
+    minHeight: '28px',
+    maxWidth: '28px',
+    maxHeight: '28px',
     borderRadius: '50%',
     backgroundColor: colors.deleteButton,
     color: '#ffffff',
     border: 'none',
     cursor: 'pointer',
     fontSize: '16px',
+    fontWeight: 'bold',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'all 0.2s',
     flexShrink: 0,
+    boxSizing: 'border-box',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    appearance: 'none',
+    padding: '0',
+    margin: '0',
+    lineHeight: '1',
+    textAlign: 'center' as const,
+    position: 'relative',
+    overflow: 'hidden',
+    // 確保在 iPhone 上保持圓形
+    aspectRatio: '1 / 1',
   },
   riskDisplay: {
     textAlign: 'center',
