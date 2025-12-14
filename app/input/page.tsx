@@ -615,37 +615,37 @@ export default function InputPage() {
   )
 }
 
-// 臨床系統配色 - 中性、簡潔
+// 馬卡龍色調配色（與其他頁面一致）
 const colors = {
-  background: '#ffffff',
-  headerBg: '#2c3e50',
+  background: 'linear-gradient(135deg, #ffeef8 0%, #e8f4f8 100%)',
+  headerBg: 'linear-gradient(135deg, #ffb6c1 0%, #87ceeb 100%)',
   headerText: '#ffffff',
-  divider: '#e0e0e0',
+  divider: 'rgba(255, 182, 193, 0.3)',
   input: '#ffffff',
-  inputBorder: '#b0b0b0',
-  inputFocus: '#4a90e2',
-  button: '#4a90e2',
-  buttonHover: '#357abd',
-  buttonDisabled: '#b0b0b0',
-  error: '#d32f2f',
-  errorBg: '#ffebee',
-  textPrimary: '#212121',
-  textSecondary: '#616161',
-  textTertiary: '#9e9e9e',
-  disclaimer: '#f5f5f5',
-  disclaimerText: '#616161',
+  inputBorder: 'rgba(255, 182, 193, 0.4)',
+  inputFocus: '#a8c8e8',
+  button: 'linear-gradient(135deg, #c8a2c8 0%, #a8c8e8 100%)',
+  buttonHover: 'linear-gradient(135deg, #b892b8 0%, #98b8d8 100%)',
+  buttonDisabled: '#d0d0d0',
+  error: '#e85a7a',
+  errorBg: '#fff0f5',
+  textPrimary: '#6b4c6b',
+  textSecondary: '#8b7a8b',
+  textTertiary: '#ab9aab',
+  disclaimer: '#fff9e6',
+  disclaimerText: '#8b7a8b',
 }
 
 // 樣式定義
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: '100vh',
-    backgroundColor: colors.background,
+    background: colors.background,
     paddingBottom: '100px', // 為 sticky submit button 留空間
     WebkitOverflowScrolling: 'touch',
   },
   header: {
-    backgroundColor: colors.headerBg,
+    background: colors.headerBg,
     color: colors.headerText,
     padding: '20px 16px',
   },
@@ -792,7 +792,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   radioLabelSelected: {
     borderColor: colors.inputFocus,
-    backgroundColor: '#f0f7ff',
+    backgroundColor: '#fff0f5',
   },
   radio: {
     width: '20px',
@@ -842,13 +842,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   submitContainer: {
     position: 'sticky',
     bottom: 0,
-    backgroundColor: colors.background,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(10px)',
     padding: '16px',
     marginTop: '24px',
     marginLeft: '-16px',
     marginRight: '-16px',
     borderTop: `1px solid ${colors.divider}`,
-    boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.05)',
+    boxShadow: '0 -2px 12px rgba(200, 162, 200, 0.15)',
   },
   submitButton: {
     width: '100%',
@@ -856,13 +857,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '16px',
     fontWeight: '600',
     color: '#ffffff',
-    backgroundColor: colors.button,
+    background: colors.button,
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
-    transition: 'background-color 0.2s',
+    transition: 'all 0.2s',
     minHeight: '48px',
     letterSpacing: '0.3px',
+    boxShadow: '0 2px 8px rgba(200, 162, 200, 0.3)',
   },
   submitButtonDisabled: {
     backgroundColor: colors.buttonDisabled,
